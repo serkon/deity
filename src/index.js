@@ -28,7 +28,7 @@ export function process(shapes, operations) {
  * @param {FilterFunction} fn - function that will execute filter agains passed shape and return true or false
  */
 export function addFilter(property, fn) {
-  filters[property] = fn;
+  FilterFunction[property] = fn;
 }
 
 /**
@@ -118,5 +118,25 @@ const util = {
     shape.y = shape.y + operation.y;
   },
 };
+
+/**
+ * Add new filter
+ */
+addFilter('color', (shape, operation) => {
+  return shape.color !== operation.value;
+})
+
+/**
+ * Sample: new filter added to operations
+ */
+const newOperations = [
+  ...operations, 
+  {  
+      "type": "filter",  
+      "property": "color",  
+      "value": "red",  
+      "operator": "neq"
+  }
+];
 
 process(shapes, operations);
