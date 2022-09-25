@@ -6,18 +6,21 @@ const shapes = require("./__tests__/shapes.json");
  * @param {object[]} operations - array of operations to apply
  * @returns {object[]} processed shapes
  */
-function process(shapes, operations) {
-  const result = shapes.reduce((previous, shape) => {
-    const t = operations.every((operation) => {
-      return FilterFunction[operation.property || operation.action](
-        shape,
-        operation
+function process(shapes, operations, deep = true) {
+  // first run will change main shapes sizes and positions
+  // to prevent this make a deep copy for multiple test request to be give correct result
+  const newShapes = deep ? JSON.parse(JSON.stringify(shapes)): shapes;
+  const newOperations = deep ? JSON.parse(JSON.stringify(operations)): operations;
+  const result = newShapes.reduce(
+    (previous, shape) => {
+      const status = newOperations.every((operation) =>
+        FilterFunction[operation.property || operation.action](shape, operation)
       );
-    });
-    return t ? [...previous, shape] : previous;
-  }, []);
-
-  console.log(result);
+      return status ? [...previous, shape] : previous;
+    },
+    []
+  );
+  return result;
 }
 
 /**
@@ -41,41 +44,51 @@ function addFilter(property, fn) {
  */
 const FilterFunction = {
   area: (shape, operation) => {
-    const value = util.area[shape.type](shape);
+    const value = helper.area[shape.type](shape);
     return controls(operation, value);
   },
   circumference: (shape, operation) => {
-    const value = util.circumference[shape.type](shape);
+    const value = helper.circumference[shape.type](shape);
     return controls(operation, value);
   },
   scale: (shape, operation) => {
-    util.scale[shape.type](shape, operation);
+    helper.scale[shape.type](shape, operation);
     return true;
   },
   move: (shape, operation) => {
-    util.move(shape, operation);
+    helper.move(shape, operation);
     return true;
   },
 };
 
+/**
+ * common matchers for filtering and transformation operations
+ * @param {object} operation - object with operation data (the same format as in operations.json file)
+ * @param {number} value - shape value after transformed or before filtered
+ * @returns {boolean} - true when shape matches the filter configuration, false when it doesn't match
+ */
 const controls = (operation, value) => {
-  let result = false;
-  if (operation.operator === "in") {
-    const [small, big] = operation.value;
-    result = small < value && big > value;
-  } else if (operation.operator === "gt") {
-    result = operation.value < value;
-  } else if (operation.operator === "lt") {
-    result = operation.value > value;
-  } else if (operation.operator === "eq") {
-    result = operation.value === value;
-  } else if (operation.operator === "neq") {
-    result = operation.value !== value;
+  switch (operation.operator) {
+    case "in":
+      const [small, big] = operation.value;
+      return small < value && big > value;
+    case "gt":
+      return operation.value < value;
+    case "lt":
+      return operation.value > value;
+    case "eq":
+      return operation.value === value;
+    case "neq":
+      return operation.value !== value;
+    default:
+      return false;
   }
-  return result;
 };
 
-const util = {
+/**
+ * helper methods calculates circumference, area, scale and move of the shapes
+ */
+const helper = {
   circumference: {
     circle: ({ radius }) => {
       return Math.round(radius * 2 * Math.PI);
@@ -116,36 +129,12 @@ const util = {
   },
 };
 
-/**
- * Add new filter
- */
-addFilter("color", (shape, operation) => {
-  switch (operation.operator) {
-    case "neq":
-      return shape.color !== operation.value;
-    case "eq":
-      return shape.color === operation.value;
-    default:
-      return true;
-  }
-});
-
-/**
- * Sample: new filter added to operations
- */
-const newOperations = [
-  ...operations,
-  {
-    type: "filter",
-    property: "color",
-    value: "red",
-    operator: "neq",
-  },
-];
-
-process(shapes, newOperations);
+// result must be same with output.json
+// const result = process(shapes, operations);
+// console.log(result);
 
 module.exports = {
   process,
   addFilter,
+  FilterFunction,
 };
