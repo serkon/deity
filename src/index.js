@@ -4,6 +4,7 @@ const shapes = require("./__tests__/shapes.json");
 /**
  * @param {object[]} shapes - array of shapes to process
  * @param {object[]} operations - array of operations to apply
+ * @param {boolean} deep - make a deep copy of the given arrays
  * @returns {object[]} processed shapes
  */
 function process(shapes, operations, deep = true) {
