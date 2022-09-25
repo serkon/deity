@@ -139,4 +139,4 @@ const newOperations = [
   }
 ];
 
-process(shapes, operations);
+process(shapes, newOperations);
