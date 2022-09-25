@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "test": "jest",
-    "start": "node src/index.js"
+    "start": "node src/index.js "
   },
   "repository": {
     "type": "git"
@@ -15,5 +15,12 @@
   "license": "MIT",
   "devDependencies": {
     "jest": "^26.0.1"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "testPathIgnorePatterns": [
+      ".history",
+      "/node_modules/"
+    ]
   }
 }

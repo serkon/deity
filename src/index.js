@@ -1,22 +1,19 @@
-import operations from "./__tests__/operations.json" assert { type: "json" };
-import shapes from "./__tests__/shapes.json" assert { type: "json" };
-
-const filters = {};
+const operations = require("./__tests__/operations.json");
+const shapes = require("./__tests__/shapes.json");
 
 /**
  * @param {object[]} shapes - array of shapes to process
  * @param {object[]} operations - array of operations to apply
  * @returns {object[]} processed shapes
  */
-export function process(shapes, operations) {
+function process(shapes, operations) {
   const result = shapes.reduce((previous, shape) => {
-    const t = operations
-      .every((operation) => {
-        return FilterFunction[operation.property || operation.action](
-          shape,
-          operation
-        );
-      });
+    const t = operations.every((operation) => {
+      return FilterFunction[operation.property || operation.action](
+        shape,
+        operation
+      );
+    });
     return t ? [...previous, shape] : previous;
   }, []);
 
@@ -27,7 +24,7 @@ export function process(shapes, operations) {
  * @param {string} property - name of the property that will be used for filter operation
  * @param {FilterFunction} fn - function that will execute filter agains passed shape and return true or false
  */
-export function addFilter(property, fn) {
+function addFilter(property, fn) {
   FilterFunction[property] = fn;
 }
 
@@ -122,21 +119,33 @@ const util = {
 /**
  * Add new filter
  */
-addFilter('color', (shape, operation) => {
-  return shape.color !== operation.value;
-})
+addFilter("color", (shape, operation) => {
+  switch (operation.operator) {
+    case "neq":
+      return shape.color !== operation.value;
+    case "eq":
+      return shape.color === operation.value;
+    default:
+      return true;
+  }
+});
 
 /**
  * Sample: new filter added to operations
  */
 const newOperations = [
-  ...operations, 
-  {  
-      "type": "filter",  
-      "property": "color",  
-      "value": "red",  
-      "operator": "neq"
-  }
+  ...operations,
+  {
+    type: "filter",
+    property: "color",
+    value: "red",
+    operator: "neq",
+  },
 ];
 
 process(shapes, newOperations);
+
+module.exports = {
+  process,
+  addFilter,
+};
